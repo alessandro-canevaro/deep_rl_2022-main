@@ -28,7 +28,8 @@ def value_iteration(mdp, gamma=.99, theta=0.0001, max_iters=10 ** 6, verbose=Fal
             Note that this has a lot of similarity to the policy-evaluation algorithm, and you can re-use 
             a lot of that solution, including qs_(...) (assuming you used that function). """
             # TODO: 2 lines missing.
-            raise NotImplementedError("Complete the algorithm here.")
+            v, V[s] = V[s], max(qs_(mdp, s, gamma, V).values()) if len(mdp.A(s))>0 else 0    
+            Delta = max(Delta, np.abs(v - V[s])) 
         if verbose:
             print(i, Delta)
         if Delta < theta:
@@ -57,7 +58,8 @@ def values2policy(mdp, V, gamma):
         # You can use the qs_ helper function to simplify things and perhaps
         # re-use ideas from the dp.py problem from week 2.
         # TODO: 2 lines missing.
-        raise NotImplementedError("")
+        Q = {a: v-(1e-8*a if isinstance(a, int) else 0) for a,v in qs_(mdp, s, gamma, V).items()} 
+        pi[s] = max(Q, key=Q.get) 
     return pi
 
 if __name__ == "__main__":

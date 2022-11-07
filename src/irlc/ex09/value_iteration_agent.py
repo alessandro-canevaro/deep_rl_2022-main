@@ -17,7 +17,7 @@ class ValueIterationAgent(TabularAgent):
         #         raise Exception("Must supply a MDP so I can plan!")
         self.epsilon = epsilon
         # TODO: 1 lines missing.
-        raise NotImplementedError("Call the value_iteration function and store the policy for later.")
+        self.policy, self.v = value_iteration(mdp, gamma=gamma, **kwargs) 
         self.Q = None  # This is slightly hacky; pay no attention to it. It is for visualization-purposes.
 
     def pi(self, s, k=0):
@@ -30,7 +30,7 @@ class ValueIterationAgent(TabularAgent):
             """ Return the optimal action here. This should be computed using value-iteration. 
              To speed things up, I recommend calling value-iteration from the __init__-method and store the policy. """
             # TODO: 1 lines missing.
-            raise NotImplementedError("Compute and return optimal action according to value-iteration.")
+            action = self.policy[s] 
             return action
 
 
