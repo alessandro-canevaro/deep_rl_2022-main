@@ -26,14 +26,14 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         torch.nn.Module.__init__(self)
         self.num_outputs = int(np.product(self.obs_space.shape))
         self._last_batch_size = None
-        self.Phi = torch.nn.Linear()
+        self.Phi = torch.nn.Linear() #Tue set a breakpoint here
         if model_conf['debug_vin']:
             self.debug_vin = model_conf['debug_vin']
 
     # Implement your own forward logic, whose output will then be sent
     # through an LSTM.
     def forward(self, input_dict, state, seq_lens):
-        obs = input_dict["obs_flat"]
+        obs = input_dict["obs"]
         # Store last batch size for value_function output.
         self._last_batch_size = obs.shape[0]
         # Return 2x the obs (and empty states).
@@ -77,6 +77,7 @@ def my_experiment(a):
 
     print(config.to_dict())
     config.model['fcnet_hiddens'] = [24, 24]
+    config.model["model_config"] = dict()
     # env = gym.make("MazeDeterministic_empty4-v0")
 
     trainer = config.build(env="MazeDeterministic_empty4-v0")
