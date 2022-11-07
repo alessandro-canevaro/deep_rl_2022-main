@@ -1,0 +1,1 @@
+from irlc.pacman.pacman_environment import GymPacmanEnvironment
