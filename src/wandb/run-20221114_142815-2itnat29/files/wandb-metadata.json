@@ -1,0 +1,42 @@
+{
+    "os": "Windows-10-10.0.19044-SP0",
+    "python": "3.9.6",
+    "heartbeatAt": "2022-11-14T13:28:15.869207",
+    "startedAt": "2022-11-14T13:28:15.112956",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "C:\\Users\\Alessandro\\Desktop\\deep_rl_2022-main\\src\\raya3c\\example_maze.py",
+    "codePath": "src\\raya3c\\example_maze.py",
+    "git": {
+        "remote": "https://github.com/alessandro-canevaro/deep_rl_2022-main.git",
+        "commit": "fa355b39138878bf9ffbefebdd4bc0c963dd833f"
+    },
+    "email": "s212977@dtu.dk",
+    "root": "C:/Users/Alessandro/Desktop/deep_rl_2022-main",
+    "host": "ALE-ZBK",
+    "username": "Alessandro",
+    "executable": "C:\\Program Files\\Python39\\python.exe",
+    "cpu_count": 2,
+    "cpu_count_logical": 4,
+    "cpu_freq": {
+        "current": 2703.0,
+        "min": 0.0,
+        "max": 2904.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2703.0,
+            "min": 0.0,
+            "max": 2904.0
+        }
+    ],
+    "disk": {
+        "total": 475.88671493530273,
+        "used": 102.00162887573242
+    },
+    "memory": {
+        "total": 15.885501861572266
+    }
+}

@@ -27,8 +27,9 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         self.num_outputs = int(np.product(self.obs_space.shape))
         self._last_batch_size = None
         self.Phi = torch.nn.Linear() #Tue set a breakpoint here
-        if model_conf['debug_vin']:
-            self.debug_vin = model_conf['debug_vin']
+        print(model_config)
+        if model_config['debug_vin']:
+            self.debug_vin = model_config['debug_vin']
 
     # Implement your own forward logic, whose output will then be sent
     # through an LSTM.
@@ -53,18 +54,8 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
 
 ModelCatalog.register_custom_model(vin_label, VINNetwork)
 
-# class DummyAgent(Agent):
-#     def __init__(self, env, trainer):
-#         super().__init__(env)
-#         self.trainer = trainer
-#
-#     def pi(self, s, k=None):
-#         return self.trainer.compute_action(s)
-#
-# class MyClass:
-#     pass
 
-def my_experiment(a):
+def my_experiment():
     print("Hello world")
     # see https://docs.ray.io/en/latest/rllib/rllib-training.html
     mconf = dict(custom_model=vin_label, use_lstm=False, debug_vin=True)
@@ -90,71 +81,10 @@ def my_experiment(a):
 
     config.save
 
-    # return
-    # print(pretty_print(result1))
-    # import matplotlib.pyplot as plt
-    # plt.plot(rewards)
-    # plt.show()
-
-    # print( rewards )
-    # env = gym.make("CartPole-v1")
-    # env.reset()
-    env = gym.make("MazeDeterministic_empty4-v0")
-    env = VideoMonitor(env)
-    train(env, DummyAgent(env, trainer), num_episodes=10)
-    a = 234
-    #
-    # config = A3CConfig()
-    # # Print out some default values.
-    # print(config.sample_async)
-    # # Update the config object.
-    # config.training(lr=tune.grid_search([0.001, 0.0001]), use_critic=False)
-    # # Set the config object's env.
-    # config.environment(env="CartPole-v1")
-    # # Use to_dict() to get the old-style python config dict
-    # # when running with tune.
-    # tune.run(
-    #     "A3C",
-    #     stop = {"episode_reward_mean": 200},
-    #     config = config.to_dict(),
-    # )
-
-
-
-
 if __name__ == "__main__":
-    print("AAAAAAAAAAAAAAAAAAAA",os.path.normpath( os.path.dirname(__file__) +"/../" ))
-
-    #
-    # import pickle
-    #
-    # with open('mydb', 'wb') as f:
-    #     pickle.dump({'x': 344}, f)
-    #
-    # with open('mydb', 'rb') as f:
-    #     s = pickle.load(f)
-    #     # pickle.dump({'x': 344}, f)
-    #
-    # sys.exit()
     res = []
     DISABLE = True
-
-    # wandb.watch(model)
-
-    # sys.exit()
-    # my_experiment(34)
-    # sys.exit()
-    #with DTUCluster(job_group="myfarm/job0", nuke_group_folder=True, rq=False, disable=False, dir_map=['../../../mavi'],
-    #                nuke_all_remote_folders=True) as cc:
-        # my_experiment(2)
-    #    wfun = cc.wrap(my_experiment) if not DISABLE else my_experiment
-    wfun = my_experiment
-    for a in [1]:
-        res.append(wfun(a))
-    print(res)
-    # res = cc.wrap(myfun)(args1, args2)
-    # val2 = myexperiment(1,2)
-    # wait_to_finish()
+    my_experiment()
     print("Job done")
     sys.exit()
 
