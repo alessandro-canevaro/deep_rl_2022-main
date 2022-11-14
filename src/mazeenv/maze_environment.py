@@ -147,6 +147,7 @@ class MazeEnvironment(Env):
         return x
 
     def step(self, action):
+        #print("action", action)
         game = self.game
         # actions = game.all_possible_actions()
         amap = {0: 'down', 1: 'left', 2:'right', 3:'up', 4:'pass'}
@@ -157,9 +158,7 @@ class MazeEnvironment(Env):
         sp = self._state()
         done = game.is_over()
         info = {}
-
-
-
+    
         return sp, reward, done, info
 
 
