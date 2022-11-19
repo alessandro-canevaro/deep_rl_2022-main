@@ -17,6 +17,13 @@ from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
 """
+import ray
+import ray.rllib.agents.ppo as ppo
+
+ray.shutdown()
+ray.init(ignore_reinit_error=True)
+"""
+"""
 steps:
 - go to example_vin.py
 - change model,, inspect obs dict
@@ -79,7 +86,7 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         torch.nn.Module.__init__(self)
-        self.num_outputs = int(np.product(self.obs_space.shape))
+        self.num_outputs = 16#int(np.product(self.obs_space.shape))
         print("self.num_outputs", self.num_outputs)
         self._last_batch_size = None
         self.Phi = torch.nn.Linear(48, 48) #Tue set a breakpoint here
@@ -88,14 +95,18 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
     # Implement your own forward logic, whose output will then be sent
     # through an LSTM.
     def forward(self, input_dict, state, seq_lens):
+        
         obs = input_dict["obs"]
         print("input_dict", input_dict)
         print("obs", obs.shape)
         print("obs[0]", obs[0].shape)
         # Store last batch size for value_function output.
         self._last_batch_size = obs.shape[0]
-        
+        """
         V = self.VIP(input_dict)
+        print("V", V)
+        V = V.flatten()
+        print("V flatten", V)
 
         # i, j = obs[0][:, :, 1]
         # self.V_ = V[i[0], j[0]]
@@ -103,8 +114,8 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         # sub_state = obs[i[0]-1:i[0]+1, j[0]-1:j[0]+1, :]
         # sub_v = V[i[0]-1:i[0]+1, j[0]-1:j[0]+1]
         # logit = self.Logit(torch.concatenate(sub_state.flatten(), sub_v.flatten()))
-
-        return V, []
+        """
+        return torch.rand([32, 16]), []
 
 
     def VIP(self, input_dict, K=20):
@@ -116,7 +127,6 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         print("(rin, rout, p)", (rin.shape, rout.shape, p.shape))
         h, w = 4, 4#obs.shape[0], obs.shape[1]
         v = np.zeros((h, w, K+1))#self.value_function()
-        vv = np.zeros((K+1, h, w))
         for k in range(K):
             for i in range(h):
                 for j in range(w):
@@ -131,11 +141,11 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
                         nv = p[i,j] * v[ip, jp,k] + rin[ip, jp] - rout[i,j]
                         v[i,j,k+1] = max( v[i,j,k+1], nv)
         print("v.shape",v.shape)
-        for k in range(K):
-            for i in range(h):
-                for j in range(w):
-                    vv[k,i,j] = v[i,j,k] # annoying transpose
-        print("vv.shape",vv.shape)
+        vv = v[:,:,min(K, v.shape[2]-1)]
+        #v_out = vv.copy()
+        #for i,j in vv:
+        #    v_out[i,j] = vv[j, i] # annoying transpose
+        #print("v_out.shape",v_out.shape)
         return vv
 
 
@@ -217,10 +227,11 @@ def my_experiment():
     # config = config.model(custom_model="my_torch_model", use_lstm=False)
 
     config.model['fcnet_hiddens'] = [24, 24]
-    # env = gym.make("MazeDeterministic_empty4-v0")
-    
+    #env = gym.make("MazeDeterministic_empty4-v0")
+
     trainer = config.build(env="MazeDeterministic_empty4-v0")
-    EPOCHS = 2
+    EPOCHS = 1
+
     for t in range(EPOCHS):
         print("Main training step", t)
         result = trainer.train()

@@ -1,3 +1,5 @@
+import sys, os
+sys.path.append(os.path.normpath( os.path.dirname(__file__) +"/../" ))
 import gym
 from mazeenv.maze_environment import MazeEnvironment
 gym.envs.register(
