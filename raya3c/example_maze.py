@@ -98,16 +98,8 @@ if __name__ == "__main__":
     # wandb.watch(model)
 
     # sys.exit()
-    # my_experiment(34)
+    my_experiment(34)
     # sys.exit()
-    #with DTUCluster(job_group="myfarm/job0", nuke_group_folder=True, rq=False, disable=False, dir_map=['../../../mavi'],
-    #                nuke_all_remote_folders=True) as cc:
-        # my_experiment(2)
-    #wfun = cc.wrap(my_experiment) if not DISABLE else my_experiment
-    wfun = my_experiment
-    for a in [1]:
-        res.append(wfun(a))
-    print(res)
     # res = cc.wrap(myfun)(args1, args2)
     # val2 = myexperiment(1,2)
     # wait_to_finish()
