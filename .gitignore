@@ -1,6 +1,7 @@
 Scripts/
 Lib/
-dlenv/
+dl_venv/
+wandb/
 pyenv.cfg
 # Byte-compiled / optimized / DLL files
 __pycache__/

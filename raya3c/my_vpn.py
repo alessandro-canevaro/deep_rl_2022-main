@@ -16,6 +16,8 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
+#torch.autograd.set_detect_anomaly(True)
+
 
 #POSTER
 #introduction
@@ -27,13 +29,6 @@ import torch
 
 #6 pages report
 
-"""
-import ray
-import ray.rllib.agents.ppo as ppo
-
-ray.shutdown()
-ray.init(ignore_reinit_error=True)
-"""
 """
 steps:
 - go to example_vin.py
@@ -103,11 +98,11 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         self.Phi = torch.nn.Linear(48, 48) #Tue set a breakpoint here 3x3x4
         self.Logit = torch.nn.Linear(48, 5)
         self.V_ = torch.zeros((32))
+        self.padder = torch.nn.ZeroPad2d(1)
 
     # Implement your own forward logic, whose output will then be sent
     # through an LSTM.
     def forward(self, input_dict, state, seq_lens):
-        
         obs = input_dict["obs"]
         B = obs.shape[0] #batch size
         self.V_ = torch.zeros((B))
@@ -117,7 +112,8 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         # Store last batch size for value_function output.
         self._last_batch_size = B
 
-        V = self.VIP(obs)
+        #V = self.VIP(obs)
+        V = self.VIP_diff(obs)
         # print("AAAAAAAAAAAAAAaaobs", obs)
         # _, I, J, _ = obs.nonzero()
         # for i, j, obs_k in zip(I, J, obs)
@@ -138,6 +134,7 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
 
             # return V.reshape((1, 16)), []
             # print("i j bidx", type(i),type(j), type(b_idx))
+            print("SHAPE", self.V_.shape, b_idx)
             self.V_[b_idx] = V[b_idx][i, j]
 
             sub_state = obs[b_idx, i-1:i+2, j-1:j+2, :]
@@ -149,9 +146,29 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
             
             logit[b_idx] = self.Logit(obs[b_idx].flatten())
 
-        print("logit.shape", logit.shape)
+        #print("logit.shape", logit.shape)
         return logit, []
 
+    def VIP_diff(self, obs, K=20): #parallel differentiable version of VIP function
+        final_v = []
+        # rewards in , out and probabilities
+        for obs_idx in range(obs.shape[0]):
+            output = self.Phi(obs[obs_idx].flatten())
+            (rin, rout, p) = output[:16].reshape(4, 4), output[16:32].reshape(4, 4), output[32:].reshape(4, 4)
+            #print("(rin, rout, p)", (rin.shape, rout.shape, p.shape))
+            
+            rin_padded = self.padder(rin)
+            h, w = 4, 4#obs.shape[0], obs.shape[1]
+            v = torch.zeros((h, w), dtype=torch.float32)#self.value_function()
+            for k in range(K):
+                v_padded = self.padder(v)
+                for w_offset, h_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
+                    nv = p * v_padded[w_offset:w_offset+w, h_offset:h_offset+h] + rin_padded[w_offset:w_offset+w, h_offset:h_offset+h] - rout
+                    v.maximum(nv)
+
+            final_v.append(v)
+
+        return final_v
 
     def VIP(self, obs, K=20):
         final_v = []
