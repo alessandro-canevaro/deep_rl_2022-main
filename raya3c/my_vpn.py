@@ -222,7 +222,7 @@ def my_experiment():
     config = A3CConfig().training(lr=0.01/10, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
     config = config.framework('torch')
     # config.
-    # config = config.callbacks(MyCallbacks)
+    #config = config.callbacks(MyCallbacks)
     # Set up alternative model (gridworld).
     # config = config.model(custom_model="my_torch_model", use_lstm=False)
 
@@ -231,6 +231,8 @@ def my_experiment():
 
     trainer = config.build(env="MazeDeterministic_empty4-v0")
     EPOCHS = 1
+
+    #https://discuss.ray.io/t/error-when-setting-done-true-eval-data-i-env-id-yields-indexerror-list-index-out-of-range/867
 
     for t in range(EPOCHS):
         print("Main training step", t)

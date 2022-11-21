@@ -277,6 +277,7 @@ class A3C(Algorithm):
             removed_workers: removed worker ids.
             new_workers: ids of newly created workers.
         """
+        print("[a3c.py line 280] worker failed")
         self._worker_manager.remove_workers(
             removed_workers, remove_in_flight_requests=True
         )
