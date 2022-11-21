@@ -1,3 +1,10 @@
+# USeful commands
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+.\dl_venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+pip install -e .
+deactivate
+
 # Deep learning project: Reinforcement learning
 
 This repository will function as a file/codedump for the VPN code I showed in the video and possibly other stuff. The code here is as-is. You don't have to use it, and perhaps using it will make the project harder. Please see the videos (video 12) where I discuss the code. If I included my wandb key by accident, please don't abuse it :-).
