@@ -92,12 +92,14 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         torch.nn.Module.__init__(self)
-        self.num_outputs = 16 #int(np.product(self.obs_space.shape))
-        print("self.num_outputs", self.num_outputs)
+        self.num_outputs = int(np.product(self.obs_space.shape))
+        self.maze_w = 4
+        self.maze_h = 4
+
         self._last_batch_size = None
-        self.Phi = torch.nn.Linear(48, 48) #Tue set a breakpoint here 3x3x4
-        self.Logit = torch.nn.Linear(48, 5)
-        self.V_ = torch.zeros((32))
+        self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs) #48, 48 #Tue set a breakpoint here 3x3x4
+        self.Logit = torch.nn.Linear(3*3*3+3*3, self.action_space.n)
+
         self.padder = torch.nn.ZeroPad2d(1)
 
     # Implement your own forward logic, whose output will then be sent
@@ -106,66 +108,56 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         obs = input_dict["obs"]
         B = obs.shape[0] #batch size
         self.V_ = torch.zeros((B))
-        # print("input_dict", input_dict)
-        # print("obs", obs.shape)
-        # print("obs[0]", obs[0].shape)
+
         # Store last batch size for value_function output.
         self._last_batch_size = B
 
         #V = self.VIP(obs)
         V = self.VIP_diff(obs)
-        # print("AAAAAAAAAAAAAAaaobs", obs)
-        # _, I, J, _ = obs.nonzero()
-        # for i, j, obs_k in zip(I, J, obs)
-        #agent_locations = []
-        logit = torch.zeros((B, 5))
-        obs = obs.reshape(B,4,4,3)
+
+        logit = torch.zeros((B, self.action_space.n))
+        obs = obs.reshape(B, self.maze_h, self.maze_w, 3)
 
         for b_idx in range(B): 
 
             if not torch.any(obs[b_idx, :, :, 1]):#.sum().item() == 0: if all zeros
                 i, j = 1, 1
             else:
-                # print("obs[b_idx, :, :, 1]",obs[b_idx, :, :, 1])
-                # print("torch.nonzero(obs[b_idx, :, :, 1])", torch.nonzero(obs[b_idx, :, :, 1]))
                 i, j = torch.nonzero(obs[b_idx, :, :, 1])[0] #the [0] is because nonzero is returning a tuple of indexes
-            #agent_locations.append((i[0], j[0]))
-            # print("V", V)
 
-            # return V.reshape((1, 16)), []
-            # print("i j bidx", type(i),type(j), type(b_idx))
-            print("SHAPE", self.V_.shape, b_idx)
+            assert self.V_.shape[0] > b_idx, f"trying to acces element {b_idx} of self.V_, but self.V_ has size {self.V_.shape[0]}"
             self.V_[b_idx] = V[b_idx][i, j]
 
-            sub_state = obs[b_idx, i-1:i+2, j-1:j+2, :]
-            sub_v = V[b_idx][i-1:i+2, j-1:j+2]
-            # print("sub_state and sub_v", sub_state.shape, sub_v.shape)
-            # print("torch.concatenate((sub_state.flatten(), sub_v.flatten())) shape", torch.concatenate((sub_state.flatten(), sub_v.flatten())).shape)
-            # logit_input = torch.concatenate((sub_state.flatten(), sub_v.flatten()))
-            # logit[b_idx] = self.Logit(logit_input.reshape((1, 36)).squeeze())
+
+            sub_state = torch.nn.functional.pad(obs[b_idx, :, :, :], (0, 0, 1, 1, 1, 1), "constant", 0)[i-1+1:i+2+1, j-1+1:j+2+1, :]
+            sub_v = self.padder(V[b_idx])[i-1+1:i+2+1, j-1+1:j+2+1]
+            logit_input = torch.concatenate((sub_state.flatten(), sub_v.flatten()))
+
+            assert logit_input.shape[0] == 3*3*3 + 3*3, f"Logit input size is {logit_input.shape[0]} (expected 36)"
+            logit[b_idx] = self.Logit(logit_input)
             
-            logit[b_idx] = self.Logit(obs[b_idx].flatten())
+            #logit[b_idx] = self.Logit(obs[b_idx].flatten())
 
         #print("logit.shape", logit.shape)
         return logit, []
 
     def VIP_diff(self, obs, K=20): #parallel differentiable version of VIP function
+        """obs has shape (B, 48)
+        """
         final_v = []
+        output = self.Phi(obs).reshape((obs.shape[0], self.maze_h, self.maze_w, 3))
         # rewards in , out and probabilities
         for obs_idx in range(obs.shape[0]):
-            output = self.Phi(obs[obs_idx].flatten())
-            (rin, rout, p) = output[:16].reshape(4, 4), output[16:32].reshape(4, 4), output[32:].reshape(4, 4)
-            #print("(rin, rout, p)", (rin.shape, rout.shape, p.shape))
+            rin, rout, p = output[obs_idx, :, :, 0], output[obs_idx, :, :, 1], output[obs_idx, :, :, 2]
             
             rin_padded = self.padder(rin)
-            h, w = 4, 4#obs.shape[0], obs.shape[1]
-            v = torch.zeros((h, w), dtype=torch.float32)#self.value_function()
-            for k in range(K):
+            v = torch.zeros((self.maze_h, self.maze_w), dtype=torch.float32)#self.value_function()
+            for __ in range(K):
                 v_padded = self.padder(v)
                 for w_offset, h_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
-                    nv = p * v_padded[w_offset:w_offset+w, h_offset:h_offset+h] + rin_padded[w_offset:w_offset+w, h_offset:h_offset+h] - rout
+                    nv = p * v_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w] + rin_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w] - rout
                     v.maximum(nv)
-
+            #v = v.transpose(0, 1) do we need this????
             final_v.append(v)
 
         return final_v
@@ -235,8 +227,8 @@ def my_experiment():
         result = trainer.train()
         print("RESULT", result)
         rewards = result['hist_stats']['episode_reward']
-        print("training epoch", t, len(rewards), rewards, result['episode_reward_mean'])
-        # print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
+        #print("training epoch", t, len(rewards), rewards, result['episode_reward_mean'])
+        print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
 
     
     
