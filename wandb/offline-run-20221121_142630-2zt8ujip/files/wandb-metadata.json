@@ -1,0 +1,50 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.9.1",
+    "heartbeatAt": "2022-11-21T13:26:30.852474",
+    "startedAt": "2022-11-21T13:26:30.456535",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "C:\\Users\\Pietro\\Downloads\\dtu\\deeplearning\\deep_rl_2022-main\\raya3c\\example_maze.py",
+    "codePath": "raya3c\\example_maze.py",
+    "git": {
+        "remote": "https://github.com/alessandro-canevaro/deep_rl_2022-main.git",
+        "commit": "4b59be5d730c7eb7d6e49cd37a0c7971695f2df7"
+    },
+    "email": "pietro@smartpricing.it",
+    "root": "C:/Users/Pietro/Downloads/dtu/deeplearning/deep_rl_2022-main",
+    "host": "Asus-Pietro",
+    "username": "Pietro",
+    "executable": "C:\\Users\\Pietro\\Downloads\\dtu\\deeplearning\\deep_rl_2022-main\\dl_venv\\Scripts\\python.exe",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 1494.0,
+        "min": 0.0,
+        "max": 1992.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1494.0,
+            "min": 0.0,
+            "max": 1992.0
+        }
+    ],
+    "disk": {
+        "total": 374.8899574279785,
+        "used": 329.53107833862305
+    },
+    "gpu": "NVIDIA GeForce MX150",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce MX150",
+            "memory_total": 2147483648
+        }
+    ],
+    "memory": {
+        "total": 15.818592071533203
+    }
+}

@@ -16,6 +16,17 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
+
+#POSTER
+#introduction
+#theory
+#results
+#reflection
+#a1 format
+
+
+#6 pages report
+
 """
 import ray
 import ray.rllib.agents.ppo as ppo
@@ -86,131 +97,99 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         torch.nn.Module.__init__(self)
-        self.num_outputs = 16#int(np.product(self.obs_space.shape))
+        self.num_outputs = 16 #int(np.product(self.obs_space.shape))
         print("self.num_outputs", self.num_outputs)
         self._last_batch_size = None
-        self.Phi = torch.nn.Linear(48, 48) #Tue set a breakpoint here
-        self.Logit = torch.nn.Linear(48, 3)
+        self.Phi = torch.nn.Linear(48, 48) #Tue set a breakpoint here 3x3x4
+        self.Logit = torch.nn.Linear(48, 5)
+        self.V_ = torch.zeros((32))
 
     # Implement your own forward logic, whose output will then be sent
     # through an LSTM.
     def forward(self, input_dict, state, seq_lens):
         
         obs = input_dict["obs"]
-        print("input_dict", input_dict)
-        print("obs", obs.shape)
-        print("obs[0]", obs[0].shape)
+        B = obs.shape[0] #batch size
+        self.V_ = torch.zeros((B))
+        # print("input_dict", input_dict)
+        # print("obs", obs.shape)
+        # print("obs[0]", obs[0].shape)
         # Store last batch size for value_function output.
-        self._last_batch_size = obs.shape[0]
-        """
-        V = self.VIP(input_dict)
-        print("V", V)
-        V = V.flatten()
-        print("V flatten", V)
+        self._last_batch_size = B
 
-        # i, j = obs[0][:, :, 1]
-        # self.V_ = V[i[0], j[0]]
+        V = self.VIP(obs)
+        # print("AAAAAAAAAAAAAAaaobs", obs)
+        # _, I, J, _ = obs.nonzero()
+        # for i, j, obs_k in zip(I, J, obs)
+        #agent_locations = []
+        logit = torch.zeros((B, 5))
+        obs = obs.reshape(B,4,4,3)
 
-        # sub_state = obs[i[0]-1:i[0]+1, j[0]-1:j[0]+1, :]
-        # sub_v = V[i[0]-1:i[0]+1, j[0]-1:j[0]+1]
-        # logit = self.Logit(torch.concatenate(sub_state.flatten(), sub_v.flatten()))
-        """
-        return torch.rand([32, 16]), []
+        for b_idx in range(B): 
+
+            if not torch.any(obs[b_idx, :, :, 1]):#.sum().item() == 0: if all zeros
+                i, j = 1, 1
+            else:
+                # print("obs[b_idx, :, :, 1]",obs[b_idx, :, :, 1])
+                # print("torch.nonzero(obs[b_idx, :, :, 1])", torch.nonzero(obs[b_idx, :, :, 1]))
+                i, j = torch.nonzero(obs[b_idx, :, :, 1])[0] #the [0] is because nonzero is returning a tuple of indexes
+            #agent_locations.append((i[0], j[0]))
+            # print("V", V)
+
+            # return V.reshape((1, 16)), []
+            # print("i j bidx", type(i),type(j), type(b_idx))
+            self.V_[b_idx] = V[b_idx][i, j]
+
+            sub_state = obs[b_idx, i-1:i+2, j-1:j+2, :]
+            sub_v = V[b_idx][i-1:i+2, j-1:j+2]
+            # print("sub_state and sub_v", sub_state.shape, sub_v.shape)
+            # print("torch.concatenate((sub_state.flatten(), sub_v.flatten())) shape", torch.concatenate((sub_state.flatten(), sub_v.flatten())).shape)
+            # logit_input = torch.concatenate((sub_state.flatten(), sub_v.flatten()))
+            # logit[b_idx] = self.Logit(logit_input.reshape((1, 36)).squeeze())
+            
+            logit[b_idx] = self.Logit(obs[b_idx].flatten())
+
+        print("logit.shape", logit.shape)
+        return logit, []
 
 
-    def VIP(self, input_dict, K=20):
-        obs = input_dict["obs"]
-
+    def VIP(self, obs, K=20):
+        final_v = []
         # rewards in , out and probabilities
-        output = self.Phi(obs[0])
-        (rin, rout, p) = output[:16].reshape(4, 4), output[16:32].reshape(4, 4), output[32:].reshape(4, 4)
-        print("(rin, rout, p)", (rin.shape, rout.shape, p.shape))
-        h, w = 4, 4#obs.shape[0], obs.shape[1]
-        v = np.zeros((h, w, K+1))#self.value_function()
-        for k in range(K):
-            for i in range(h):
-                for j in range(w):
-                    v[i, j, k+1] = v[i,j,k]
-                    for di, dj in [ (-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        if di + i < 0 or dj + j < 0:
-                            continue
-                        if di + i >= h or dj + j >= w:
-                            continue
-                        ip = i + di
-                        jp = j + dj
-                        nv = p[i,j] * v[ip, jp,k] + rin[ip, jp] - rout[i,j]
-                        v[i,j,k+1] = max( v[i,j,k+1], nv)
-        print("v.shape",v.shape)
-        vv = v[:,:,min(K, v.shape[2]-1)]
-        #v_out = vv.copy()
-        #for i,j in vv:
-        #    v_out[i,j] = vv[j, i] # annoying transpose
-        #print("v_out.shape",v_out.shape)
-        return vv
+        for obs_idx in range(obs.shape[0]):
+            output = self.Phi(obs[obs_idx].flatten())
+            (rin, rout, p) = output[:16].reshape(4, 4), output[16:32].reshape(4, 4), output[32:].reshape(4, 4)
+            #print("(rin, rout, p)", (rin.shape, rout.shape, p.shape))
+            h, w = 4, 4#obs.shape[0], obs.shape[1]
+            v = torch.zeros((h, w, K+1), dtype=torch.float32)#self.value_function()
+            for k in range(K):
+                for i in range(h):
+                    for j in range(w):
+                        v[i, j, k+1] = v[i,j,k]
+                        for di, dj in [ (-1, 0), (1, 0), (0, -1), (0, 1)]:
+                            if di + i < 0 or dj + j < 0:
+                                continue
+                            if di + i >= h or dj + j >= w:
+                                continue
+                            ip = i + di
+                            jp = j + dj
+                            nv = p[i,j] * v[ip, jp,k] + rin[ip, jp] - rout[i,j]
+                            v[i,j,k+1] = max( v[i,j,k+1], nv)
+            #print("v.shape",v.shape)
+            vv = v[:,:,min(K, v.shape[2]-1)]
+            #v_out = vv.copy()
+            #for i,j in vv:
+            #    v_out[i,j] = vv[j, i] # annoying transpose
+            #print("v_out.shape",v_out.shape)
+            #vv = torch.from_numpy(vv)
+            #vv.requires_grad=True
+            final_v.append(vv)
+
+        return final_v
 
 
     def value_function(self):
-        return torch.from_numpy(np.zeros(shape=(self._last_batch_size,)))
-
-class TestVINNetwork(torch.nn.Module):
-    def __init__(self):
-        # super().__init__(obs_space, action_space, num_outputs, model_config, name)
-        torch.nn.Module.__init__(self)
-        self.Phi = torch.nn.Linear(48, 48) #Tue set a breakpoint here
-        self.Logit = torch.nn.Linear(48, 3)
-
-    # Implement your own forward logic, whose output will then be sent
-    # through an LSTM.
-    def forward(self, input_dict):
-        obs = input_dict["obs"]
-        print("input_dict", input_dict)
-        print("obs", obs.shape)
-        print("obs[0]", obs[0].shape)
-        # Store last batch size for value_function output.
-        self._last_batch_size = obs.shape[0]
-        
-        V = self.VIP(input_dict)
-
-        # i, j = obs[0][:, :, 1]
-        # self.V_ = V[i[0], j[0]]
-
-        # sub_state = obs[i[0]-1:i[0]+1, j[0]-1:j[0]+1, :]
-        # sub_v = V[i[0]-1:i[0]+1, j[0]-1:j[0]+1]
-        # logit = self.Logit(torch.concatenate(sub_state.flatten(), sub_v.flatten()))
-
-        return V, []
-
-
-    def VIP(self, input_dict, K=20):
-        obs = input_dict["obs"]
-
-        # rewards in , out and probabilities
-        output = self.Phi(obs[0])
-        (rin, rout, p) = output[:16].reshape(4, 4), output[16:32].reshape(4, 4), output[32:].reshape(4, 4)
-
-        h, w = 4, 4#obs.shape[0], obs.shape[1]
-        v = np.zeros((h, w, K+1))#self.value_function()
-        
-        for k in range(K):
-            for i in range(h):
-                for j in range(w):
-                    v[i, j, k+1] = v[i,j,k]
-                    for di, dj in [ (-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        if di + i < 0 or dj + j < 0:
-                            continue
-                        if di + i >= h or dj + j >= w:
-                            continue
-                        ip = i + di
-                        jp = j + dj
-                        nv = p[i,j] * v[ip, jp,k] + rin[ip, jp] - rout[i,j]
-                        v[i,j,k+1] = max( v[i,j,k+1], nv)
-
-        return v
-
-
-    def value_function(self):
-        return torch.from_numpy(np.zeros(shape=(self._last_batch_size,)))
-
+        return self.V_#torch.from_numpy(np.zeros(shape=(self._last_batch_size,)))
 
 ModelCatalog.register_custom_model(vin_label, VINNetwork)
 
@@ -237,10 +216,12 @@ def my_experiment():
     for t in range(EPOCHS):
         print("Main training step", t)
         result = trainer.train()
+        print("RESULT", result)
         rewards = result['hist_stats']['episode_reward']
-        print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
+        print("training epoch", t, len(rewards), rewards, result['episode_reward_mean'])
+        # print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
 
-    config.save
+    
     
 
 if __name__ == "__main__":

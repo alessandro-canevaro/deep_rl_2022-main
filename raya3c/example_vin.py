@@ -99,10 +99,10 @@ def my_experiment(a):
     # print( rewards )
     # env = gym.make("CartPole-v1")
     # env.reset()
-    env = gym.make("MazeDeterministic_empty4-v0")
-    env = VideoMonitor(env)
-    train(env, DummyAgent(env, trainer), num_episodes=10)
-    a = 234
+    # env = gym.make("MazeDeterministic_empty4-v0")
+    # env = VideoMonitor(env)
+    # train(env, DummyAgent(env, trainer), num_episodes=10)
+    # a = 234
     #
     # config = A3CConfig()
     # # Print out some default values.
