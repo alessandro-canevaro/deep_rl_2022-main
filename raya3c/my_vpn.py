@@ -141,8 +141,10 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
         #print("logit.shape", logit.shape)
         return logit, []
 
-    def VIP_diff(self, obs, K=20): #parallel differentiable version of VIP function
-        """obs has shape (B, 48)
+    def VIP_diff(self, obs, K=20):
+        """
+        Parallel and differentiable version of VIP function
+        obs has shape (B, 48)
         """
         final_v = []
         output = self.Phi(obs).reshape((obs.shape[0], self.maze_h, self.maze_w, 3))
@@ -152,11 +154,14 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
             
             rin_padded = self.padder(rin)
             v = torch.zeros((self.maze_h, self.maze_w), dtype=torch.float32)#self.value_function()
+
             for __ in range(K):
                 v_padded = self.padder(v)
                 for w_offset, h_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
+                    #p*v should be element wise or matrix mult???
                     nv = p * v_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w] + rin_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w] - rout
                     v.maximum(nv)
+
             #v = v.transpose(0, 1) do we need this????
             final_v.append(v)
 
@@ -198,7 +203,7 @@ class VINNetwork(TorchModelV2, torch.nn.Module):
 
 
     def value_function(self):
-        return self.V_#torch.from_numpy(np.zeros(shape=(self._last_batch_size,)))
+        return self.V_ #torch.from_numpy(np.zeros(shape=(self._last_batch_size,)))
 
 ModelCatalog.register_custom_model(vin_label, VINNetwork)
 
@@ -220,8 +225,6 @@ def my_experiment():
     trainer = config.build(env="MazeDeterministic_empty4-v0")
     EPOCHS = 1
 
-    #https://discuss.ray.io/t/error-when-setting-done-true-eval-data-i-env-id-yields-indexerror-list-index-out-of-range/867
-
     for t in range(EPOCHS):
         print("Main training step", t)
         result = trainer.train()
@@ -230,16 +233,8 @@ def my_experiment():
         #print("training epoch", t, len(rewards), rewards, result['episode_reward_mean'])
         print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
 
-    
-    
 
 if __name__ == "__main__":
-    """
-    network = TestVINNetwork()
-    network.forward({'obs': torch.rand(32, 48)})
-    """
-    res = []
-    DISABLE = True
     my_experiment()
     print("Job done")
     sys.exit()
