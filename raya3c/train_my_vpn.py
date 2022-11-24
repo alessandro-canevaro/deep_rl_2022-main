@@ -89,7 +89,7 @@ steps:
 vin_label = "vin_network_model"
 # Kig paa: FullyConnectedNetwork som er den Model-klassen bruger per default.
 # alt. copy-paste FullyConnectedNetwork-koden ind i denne klasse og modififer gradvist (check at den virker paa simple gridworld)
-class VPNNetwork(TorchModelV2, torch.nn.Module):
+class VINNetwork(TorchModelV2, torch.nn.Module):
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         torch.nn.Module.__init__(self)
@@ -234,7 +234,7 @@ class MyAgent(Agent):
         #print(f"TRAIN s, a, r, sp, done, {s, a, r, sp, done}")
 
 
-ModelCatalog.register_custom_model(vin_label, VPNNetwork)
+ModelCatalog.register_custom_model(vin_label, VINNetwork)
 
 
 def my_experiment():

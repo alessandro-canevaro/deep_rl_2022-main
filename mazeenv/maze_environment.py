@@ -133,7 +133,7 @@ class MazeEnvironment(Env):
                 for t in game._map[i][j]:
                     if isinstance(t, MovingAgent):
                         x[j,i,1] = 1
-                        print("Agent location", i, j)
+                        #print("Agent location", i, j)
                         x[j,i,0] = 0
                     elif isinstance(t, Goal):
                         x[j,i,2] = 1

@@ -39,7 +39,6 @@ def my_experiment(a):
         rewards = result['hist_stats']['episode_reward']
         print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
 
-    return
     # print(pretty_print(result1))
     import matplotlib.pyplot as plt
 
@@ -48,7 +47,7 @@ def my_experiment(a):
     print( rewards )
     env = gym.make("CartPole-v1")
     # env.reset()
-    # trainer.compute_action(env.reset())
+    trainer.compute_action(env.reset())
     env = VideoMonitor(env)
     train(env, DummyAgent(env, trainer), num_episodes=10)
     a = 234
