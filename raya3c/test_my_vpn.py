@@ -56,13 +56,14 @@ def my_experiment():
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
 
 
-    checkpoint_dir = "./saved_models/1669306377.3074465/checkpoint_000025"#"./saved_models/checkpoint_000001"
+    checkpoint_dir = "./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
     trainer.restore(checkpoint_dir)
 
     env = gym.make("MazeDeterministic_empty4-test-v0")
     env = VideoMonitor(env)
-    
-    train(env, MyAgent(env, trainer), num_episodes=10)
+    #added sleep in agent.py line 199
+    #removed render_as_text in maze_environment.py line 101, 176
+    train(env, MyAgent(env, trainer), num_episodes=5)
     
     env.close()
         

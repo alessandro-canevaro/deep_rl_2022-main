@@ -9,6 +9,7 @@ from tqdm import tqdm
 from irlc.utils.common import load_time_series, log_time_series
 from irlc.utils.irlc_plot import existing_runs
 import shutil
+from time import sleep
 # Main agent class. See for further details. for additional details.
 from gym import Env
 
@@ -196,6 +197,7 @@ def train(env, agent=None, experiment_name=None, num_episodes=1, verbose=True,
             trajectory = Trajectory(time=[], state=[], action=[], reward=[], env_info=[])
 
             for _ in itertools.count():
+                sleep(0.5) #for visualization
                 a = agent.pi(s,time) if temporal_policy else agent.pi(s)
                 sp, r, done, metadata = env.step(a)
 

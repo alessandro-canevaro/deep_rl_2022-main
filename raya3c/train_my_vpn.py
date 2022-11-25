@@ -68,16 +68,17 @@ def my_experiment():
     #env = gym.make("MazeDeterministic_empty4-v0")
 
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
-    EPOCHS = 25
+    EPOCHS = 40
 
+    print("training started")
     for t in range(EPOCHS):
-        print("Main training step", t)
         result = trainer.train()
-        print("RESULT", result)
+        #print("RESULT", result)
         rewards = result['hist_stats']['episode_reward']
-        print("training epoch", t, len(rewards), max(rewards), result['episode_reward_mean'])
+        print(f"training epoch: {t}, rewards: {len(rewards)}, max: {max(rewards)}, avg: {result['episode_reward_mean']}")
 
-    checkpoint_dir = trainer.save(f"./saved_models/check_{str(datetime.now())}")
+    date = str(datetime.now()).split(".")[0].replace("-", "_").replace(":", "_").replace(" ", "_")
+    checkpoint_dir = trainer.save(f"./saved_models/check_{date}")
     print(f"Saved model in {checkpoint_dir}")
         
 

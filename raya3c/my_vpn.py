@@ -1,19 +1,11 @@
 import sys, os
 sys.path.append(os.path.normpath( os.path.dirname(__file__) +"/../" ))
-import gym
-from mazeenv import maze_register
-from a3c import A3CConfig
-# import farmer
-#from dtufarm import DTUCluster
-from irlc import Agent, train, VideoMonitor
+
 
 import numpy as np
 from ray import tune
 from ray.tune.logger import pretty_print
-from raya3c.my_callback import MyCallbacks
 
-# The custom model that will be wrapped by an LSTM.
-from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
@@ -51,7 +43,11 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         self._last_batch_size = B
 
         #V = self.VIP(obs)
-        V = self.VIP_diff(obs)
+        phi_out = self.Phi(obs).reshape((obs.shape[0], self.maze_h, self.maze_w, 3))
+        V = self.VIP_diff(phi_out, K=20)
+        #V_old = self.VIP_old(phi_out, K=20)
+        #for b_idx in range(B):
+        #    assert torch.allclose(V[b_idx], V_old[b_idx], atol=0.0001), f"V != Vold at b_idx={b_idx}: \n{V[b_idx]}, \n{V_old[b_idx]}"
 
         logit = torch.zeros((B, self.action_space.n))
         obs = obs.reshape(B, self.maze_h, self.maze_w, 3)
@@ -64,6 +60,9 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
             else:
                 i, j = torch.nonzero(obs[b_idx, :, :, 1])[0] #the [0] is because nonzero is returning a tuple of indexes
                 goal_i, goal_j = torch.nonzero(obs[b_idx, :, :, 2])[0]
+                #assert False, f"obs {obs[b_idx][:, :, 2]} {obs[b_idx].swapaxes(2, 1).swapaxes(1, 0)[2, :, :]}, {obs[b_idx].reshape((3, 4, 4))[2, :, :]}"
+                #a = torch.Tensor(list(range(48))).reshape((3, 4, 4))
+                #assert False, f"a {a[1, :, :]}, {a.reshape((4, 4, 3))[:, :, 1]}, {a.swapaxes(0, 1).swapaxes(1, 2)[:, :, 1]}"
             
             #assert goal_i == 3 and goal_j == 0, "Goal is not in top left corner. It is in {}, {}".format(goal_i, goal_j)
             assert V_.shape[0] > b_idx, f"trying to access element {b_idx} of V_, but V_ has size {V_.shape[0]}, {V_}, {B}, {obs.shape}"
@@ -83,39 +82,42 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         self.V_ = V_
         return logit, []
 
-    def VIP_diff(self, obs, K=20):
+    def VIP_diff(self, phi_out, K=20):
         """
         Parallel and differentiable version of VIP function
         obs has shape (B, 48)
         """
         final_v = []
-        output = self.Phi(obs).reshape((obs.shape[0], self.maze_h, self.maze_w, 3))
         # rewards in , out and probabilities
-        for obs_idx in range(obs.shape[0]):
-            rin, rout, p = output[obs_idx, :, :, 0], output[obs_idx, :, :, 1], output[obs_idx, :, :, 2]
+        for obs_idx in range(phi_out.shape[0]):
+            #assert False, f"obs {obs[0][:, :, 2]}"
+            rin, rout, p = phi_out[obs_idx, :, :, 0], phi_out[obs_idx, :, :, 1], phi_out[obs_idx, :, :, 2]
             
             rin_padded = self.padder(rin)
             v = torch.zeros((self.maze_h, self.maze_w), dtype=torch.float32)#self.value_function()
 
             for __ in range(K):
                 v_padded = self.padder(v)
-                for w_offset, h_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
-                    #p*v should be element wise or matrix mult???
-                    nv = p * v_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w] + rin_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w] - rout
-                    v.maximum(nv)
+                for h_offset, w_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
+                    v_shifted = v_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w]
+                    rin_shifted = rin_padded[h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w]
+                    mask = torch.eq(rin_shifted, torch.zeros((self.maze_h, self.maze_w)))
+                    rout_masked = rout * (1-mask.int().float())
 
-            v = v.transpose(0, 1)# do we need this????
+                    nv = p * v_shifted + rin_shifted - rout_masked
+                    v = v.maximum(nv)
+
+            #v = v.transpose(0, 1)# do we need this???? should it be a flip rows?
             final_v.append(v)
 
         return final_v
 
-    def VIP(self, obs, K=20):
+    def VIP_old(self, phi_out, K=20):
         final_v = []
         # rewards in , out and probabilities
-        for obs_idx in range(obs.shape[0]):
-            output = self.Phi(obs[obs_idx].flatten())
-            (rin, rout, p) = output[:16].reshape(4, 4), output[16:32].reshape(4, 4), output[32:].reshape(4, 4)
-            #print("(rin, rout, p)", (rin.shape, rout.shape, p.shape))
+        for obs_idx in range(phi_out.shape[0]):
+            rin, rout, p = phi_out[obs_idx, :, :, 0], phi_out[obs_idx, :, :, 1], phi_out[obs_idx, :, :, 2]
+            
             h, w = 4, 4#obs.shape[0], obs.shape[1]
             v = torch.zeros((h, w, K+1), dtype=torch.float32)#self.value_function()
             for k in range(K):
@@ -130,6 +132,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
                             ip = i + di
                             jp = j + dj
                             nv = p[i,j] * v[ip, jp,k] + rin[ip, jp] - rout[i,j]
+                            #print("nv", obs_idx, i, j, nv)
                             v[i,j,k+1] = max( v[i,j,k+1], nv)
             #print("v.shape",v.shape)
             vv = v[:,:,min(K, v.shape[2]-1)]

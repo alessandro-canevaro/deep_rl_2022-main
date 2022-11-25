@@ -98,7 +98,8 @@ class MazeEnvironment(Env):
 
             self.game.reset()
             if self.render_mode == 'human':
-                self.render_as_text()
+                #self.render_as_text() #render maze with prints
+                pass
             np.random.set_state(np_state)
             random.setstate(r_state)
 
@@ -169,10 +170,10 @@ class MazeEnvironment(Env):
         state = self.state
         I,J = state[:,:,1].nonzero()
         if len(I) == 0:
-            print(I, state)
+            print("len(I)==0", I, state)
         state = (J[0], I[0])
-        print(state)
-        self.render_as_text()
+        print("state", state)
+        #self.render_as_text() #render maze with prints
 
         self.agent = agent
         self.render_steps = 0 # for vizualization
