@@ -8,6 +8,7 @@ from a3c import A3CConfig
 from irlc import Agent, train, VideoMonitor
 
 import numpy as np
+import ray
 from ray import tune
 from ray.tune.logger import pretty_print
 from raya3c.my_callback import MyCallbacks
@@ -55,6 +56,8 @@ ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
 def my_experiment():
     print("Hello world")
+    #ray.init(num_cpus=4, num_gpus=0)
+
     # see https://docs.ray.io/en/latest/rllib/rllib-training.html
     mconf = dict(custom_model=vin_label, use_lstm=False)
     config = A3CConfig().training(lr=0.01/10, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
@@ -68,7 +71,7 @@ def my_experiment():
     #env = gym.make("MazeDeterministic_empty4-v0")
 
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
-    EPOCHS = 150
+    EPOCHS = 200
 
     print("training started")
     for t in range(EPOCHS):

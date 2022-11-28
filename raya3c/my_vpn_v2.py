@@ -87,6 +87,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
 
                 nv = p * shifted_v + shifted_rin - masked_rout
                 Values = Values.maximum(nv)
+        #print(Values)
         return Values
 
 

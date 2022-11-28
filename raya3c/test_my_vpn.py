@@ -57,7 +57,7 @@ def my_experiment():
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
 
 
-    checkpoint_dir = "./saved_models/check_2022_11_28_14_17_45/checkpoint_000150"#"./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
+    checkpoint_dir = "./saved_models/500_VPN_empty_random_working/checkpoint_000500"#"./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
     trainer.restore(checkpoint_dir)
 
     env = gym.make("MazeDeterministic_empty4-test-v0")
