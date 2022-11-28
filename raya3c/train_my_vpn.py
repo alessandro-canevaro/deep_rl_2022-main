@@ -17,7 +17,8 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
-from my_vpn import VPNNetwork
+#from my_vpn import VPNNetwork
+from my_vpn_v2 import VPNNetwork
 from datetime import datetime
 
 #torch.autograd.set_detect_anomaly(True)
@@ -52,7 +53,6 @@ steps:
 vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
-
 def my_experiment():
     print("Hello world")
     # see https://docs.ray.io/en/latest/rllib/rllib-training.html
@@ -68,7 +68,7 @@ def my_experiment():
     #env = gym.make("MazeDeterministic_empty4-v0")
 
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
-    EPOCHS = 40
+    EPOCHS = 5
 
     print("training started")
     for t in range(EPOCHS):
