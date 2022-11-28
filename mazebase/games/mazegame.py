@@ -218,6 +218,7 @@ class BaseMazeGame(object):
                 self.__reward_so_far = 0
 
                 self._reset()
+                """
                 cornerlocs = [(0, 0),
                               (0, self.height-1),
                               (self.width-1, 0),
@@ -225,6 +226,8 @@ class BaseMazeGame(object):
                 ]
                 for loc in cornerlocs:
                     self._add_item(mi.Corner(location=loc))
+
+                """
                 self._step()
                 self._accumulate_approximate_rewards()
                 self.__approx_best = self._calculate_approximate_reward()

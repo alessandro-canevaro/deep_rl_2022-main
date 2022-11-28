@@ -9,6 +9,13 @@ from ray.tune.logger import pretty_print
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
+#why its called VIP
+# why there is gray corner
+#why its not working with random maze
+#how many epochs?
+#how many layers?
+#evaluation function how does it work?
+
 
 vin_label = "vin_network_model"
 
