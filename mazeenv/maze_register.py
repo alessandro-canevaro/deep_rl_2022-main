@@ -6,13 +6,13 @@ gym.envs.register(
      id="MazeDeterministic_empty4-train-v0",
      entry_point='mazeenv.maze_environment:MazeEnvironment',
      max_episode_steps=200,
-     kwargs=dict(size=4, blockpct=0, seed=0, render_mode='native'),
+     kwargs=dict(size=4, blockpct=0, render_mode='native'),
 )
 gym.envs.register(
      id="MazeDeterministic_empty4-test-v0",
      entry_point='mazeenv.maze_environment:MazeEnvironment',
      max_episode_steps=200,
-     kwargs=dict(size=4, blockpct=0, seed=0, render_mode='human'),
+     kwargs=dict(size=4, blockpct=0, render_mode='human'),
 )
 from ray.tune.registry import register_env
 

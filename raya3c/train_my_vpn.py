@@ -68,7 +68,7 @@ def my_experiment():
     #env = gym.make("MazeDeterministic_empty4-v0")
 
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
-    EPOCHS = 5
+    EPOCHS = 150
 
     print("training started")
     for t in range(EPOCHS):

@@ -32,10 +32,15 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         B = obs_flat.shape[0]
         self._last_batch_size = B
         obs = obs_flat.reshape(B, self.maze_h, self.maze_w, 3)
-    
+
+        obs_flat = obs_flat.reshape((B, self.maze_h*self.maze_w*3))
+        if obs_flat.shape[1] != 48:
+            print("OBS", obs_flat.shape, obs.shape)
         phi_out = self.Phi(obs_flat).reshape((B, self.maze_h, self.maze_w, 3))
         rin, rout, p = phi_out[:, :, :, 0], phi_out[:, :, :, 1], phi_out[:, :, :, 2]
         Values = self.VIP(rin, rout, p, K=20)
+        #Values_old = self.VIP_old(rin, rout, p, K=20)
+        #assert torch.allclose(Values, Values_old), f"VIP not equal: {Values}, {Values_old}"
         
         obs_val = torch.cat((obs, Values.unsqueeze(dim=-1)), dim=3)
         padded_obs_val = torch.nn.functional.pad(obs_val, (0, 0, 1, 1, 1, 1, 0, 0), "constant", 0)
@@ -57,7 +62,28 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         
         return logit, []
 
-    def VIP(self, rin_full, rout_full, p_full, K=20):
+    def VIP(self, rin, rout, p, K=20):
+        B = rin.shape[0]
+        Values = torch.zeros((B, 4, 4))
+
+        padded_rin = torch.nn.functional.pad(rin, (1, 1, 1, 1, 0, 0), "constant", 0)
+
+        for __ in range(K):
+            padded_v = torch.nn.functional.pad(Values, (1, 1, 1, 1, 0, 0), "constant", 0)
+            
+            for h_offset, w_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
+                shifted_v = padded_v[:, h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w]
+                shifted_rin = padded_rin[:, h_offset:h_offset+self.maze_h, w_offset:w_offset+self.maze_w]
+
+                mask = torch.eq(shifted_rin, torch.zeros((B, self.maze_h, self.maze_w)))
+                masked_rout = rout * (1-mask.int().float())
+
+                nv = p * shifted_v + shifted_rin - masked_rout
+                Values = Values.maximum(nv)
+        return Values
+
+
+    def VIP_old(self, rin_full, rout_full, p_full, K=20):
         final_v = torch.zeros((rin_full.shape[0], 4, 4))
         for obs_idx in range(rin_full.shape[0]):
             rin, rout, p = rin_full[obs_idx, :, :],rout_full[obs_idx, :, :], p_full[obs_idx, :, :]
