@@ -46,8 +46,6 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         obs = obs_flat.reshape(B, self.maze_h, self.maze_w, 3)
 
         obs_flat = obs_flat.reshape((B, self.maze_h*self.maze_w*3))
-        if obs_flat.shape[1] != 48:
-            print("OBS", obs_flat.shape, obs.shape)
         phi_out = self.Phi(obs_flat).reshape((B, self.maze_h, self.maze_w, 3))
         rin = phi_out[:, :, :, 0]
         rout = phi_out[:, :, :, 1] 
@@ -74,7 +72,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         logit = self.relu(logit)
         logit = self.Logit2(logit)
 
-        Values = Values.reshape((B, 4*4))
+        Values = Values.reshape((B, self.maze_h * self.maze_w))
         pos = (pos[:, 0] * pos[:, 1]).reshape((B, 1))
         self.V_ = torch.gather(Values, 1, pos).reshape((B))
         
@@ -82,7 +80,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
 
     def VIP(self, rin, rout, p, K=20):
         B = rin.shape[0]
-        Values = torch.zeros((B, 4, 4))
+        Values = torch.zeros((B, self.maze_h, self.maze_w))
 
         padded_rin = torch.nn.functional.pad(rin, (1, 1, 1, 1, 0, 0), "constant", 0)
 
@@ -101,7 +99,10 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         #print(Values)
         return Values
 
+    def value_function(self):
+        return self.V_
 
+    """
     def VIP_old(self, rin_full, rout_full, p_full, K=20):
         final_v = torch.zeros((rin_full.shape[0], 4, 4))
         for obs_idx in range(rin_full.shape[0]):
@@ -125,6 +126,5 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
             final_v[obs_idx] = v
 
         return final_v
+    """
 
-    def value_function(self):
-        return self.V_
