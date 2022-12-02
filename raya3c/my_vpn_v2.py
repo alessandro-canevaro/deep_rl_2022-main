@@ -32,6 +32,8 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs) #48, 48 #Tue set a breakpoint here 3x3x4
         self.Logit = torch.nn.Linear(3*3*3+3*3, self.action_space.n)
 
+        self.softmax = torch.nn.Softmax(dim=1)
+
         self.padder = torch.nn.ZeroPad2d(1)
 
     def forward(self, input_dict, state, seq_lens):
@@ -44,7 +46,11 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         if obs_flat.shape[1] != 48:
             print("OBS", obs_flat.shape, obs.shape)
         phi_out = self.Phi(obs_flat).reshape((B, self.maze_h, self.maze_w, 3))
-        rin, rout, p = phi_out[:, :, :, 0], phi_out[:, :, :, 1], phi_out[:, :, :, 2]
+        rin = phi_out[:, :, :, 0]
+        rout = phi_out[:, :, :, 1] 
+        p = self.softmax(phi_out[:, :, :, 2].reshape((B, self.maze_h*self.maze_w))).reshape((B, self.maze_h, self.maze_w))
+        #assert abs(p.sum()/B - 1.0) < 0.01 , f"sum = {p.sum()/B}"
+
         Values = self.VIP(rin, rout, p, K=20)
         #Values_old = self.VIP_old(rin, rout, p, K=20)
         #assert torch.allclose(Values, Values_old), f"VIP not equal: {Values}, {Values_old}"
