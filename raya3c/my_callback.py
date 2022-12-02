@@ -34,7 +34,7 @@ class MyCallbacks(DefaultCallbacks):
         print("Initializing the callback logger..")
         if self.wandb is None:
             import wandb
-            wandb.init(project="dtu-rl", entity="alessandro26", name="run1")
+            wandb.init(project="VPN", entity="deep-rl", name="run1")
             wandb.config = {
                 "learning_rate": 0.001,
                 "epochs": 100,
