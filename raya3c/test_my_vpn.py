@@ -36,7 +36,7 @@ class MyAgent(Agent):
 vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
-checkpoint_dir = "./saved_models/500_VPN_empty_random_working/checkpoint_000500"#"./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
+checkpoint_dir = "./saved_models/2_logit_layers_no_walls/checkpoint_000500"#"./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
 TRAIN_ENV = "MazeDeterministic_empty4-train-v0"
 TEST_ENV = "MazeDeterministic_empty4-test-v0"
 
@@ -44,7 +44,7 @@ TEST_ENV = "MazeDeterministic_empty4-test-v0"
 def my_experiment():
     print("Hello world testing")
     # see https://docs.ray.io/en/latest/rllib/rllib-training.html
-    mconf = dict(custom_model=vin_label, use_lstm=False)
+    mconf = dict(custom_model=vin_label, use_lstm=False, custom_model_config = {"is_train": False})
     config = A3CConfig().training(lr=0.01/10, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
     config = config.framework('torch')
     # config.

@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.normpath( os.path.dirname(__file__) +"/../" ))
 
-
+import matplotlib.pyplot as plt
 import numpy as np
 from ray import tune
 from ray.tune.logger import pretty_print
@@ -28,6 +28,8 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         self.maze_w = 4
         self.maze_h = 4
 
+        self.is_train = model_config["custom_model_config"]["is_train"]
+
         self._last_batch_size = None
         self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs) #48, 48 #Tue set a breakpoint here 3x3x4
         self.Logit = torch.nn.Linear(3*3*3+3*3, 16)
@@ -53,6 +55,9 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         #assert abs(p.sum()/B - 1.0) < 0.01 , f"sum = {p.sum()/B}"
 
         Values = self.VIP(rin, rout, p, K=20)
+        if False:#not self.is_train:
+            self.plotValues(Values)
+
         #Values_old = self.VIP_old(rin, rout, p, K=20)
         #assert torch.allclose(Values, Values_old), f"VIP not equal: {Values}, {Values_old}"
         
@@ -75,8 +80,33 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         Values = Values.reshape((B, self.maze_h * self.maze_w))
         pos = (pos[:, 0] * pos[:, 1]).reshape((B, 1))
         self.V_ = torch.gather(Values, 1, pos).reshape((B))
-        
+
+        print(logit)
         return logit, []
+
+    def plotValues(self, values):
+        #print(values.shape)
+        if values.shape[0] == 1:
+            
+            values = values.reshape((self.maze_h, self.maze_w))
+            values = values.detach().numpy()
+            print(values)
+            #values = np.rot90(values)
+            #plt.imshow(values, cmap='hot', interpolation='nearest')
+            #plt.pause(0.05)
+            """
+            heatmap = plt.pcolor(values)
+
+            for y in range(values.shape[0]):
+                for x in range(values.shape[1]):
+                    plt.text(x + 0.5, y + 0.5, '%.4f' % values[y, x],
+                            horizontalalignment='center',
+                            verticalalignment='center',
+                            )
+
+            plt.colorbar(heatmap)
+            plt.show()
+            """
 
     def VIP(self, rin, rout, p, K=20):
         B = rin.shape[0]
@@ -96,7 +126,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
 
                 nv = p * shifted_v + shifted_rin - masked_rout
                 Values = Values.maximum(nv)
-        #print(Values)
+        
         return Values
 
     def value_function(self):
