@@ -22,6 +22,7 @@ import torch
 from my_vpn_v2 import VPNNetwork
 from datetime import datetime
 
+from functools import partial
 #torch.autograd.set_detect_anomaly(True)
 
 
@@ -54,6 +55,9 @@ steps:
 vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
+EPOCHS = 1
+RUN_NAME = "ciao"
+ENV_NAME = "MazeDeterministic_empty4-train-v0"
 def my_experiment():
     print("Hello world")
     #ray.init(num_cpus=4, num_gpus=0)
@@ -63,15 +67,14 @@ def my_experiment():
     config = A3CConfig().training(lr=0.01/10, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
     config = config.framework('torch')
     # config.
-    config = config.callbacks(MyCallbacks)
+    config = config.callbacks(partial(MyCallbacks, RUN_NAME))
     # Set up alternative model (gridworld).
     # config = config.model(custom_model="my_torch_model", use_lstm=False)
 
     # config.model['fcnet_hiddens'] = [24, 24]
     #env = gym.make("MazeDeterministic_empty4-v0")
 
-    trainer = config.build(env="MazeDeterministic_empty4-train-v0")
-    EPOCHS = 1
+    trainer = config.build(env=ENV_NAME)
 
     print("training started")
     for t in range(EPOCHS):
