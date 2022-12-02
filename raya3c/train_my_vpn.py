@@ -55,8 +55,8 @@ steps:
 vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
-EPOCHS = 1
-RUN_NAME = "ciao"
+EPOCHS = 500
+RUN_NAME = "2_logit_layers_no_walls"
 ENV_NAME = "MazeDeterministic_empty4-train-v0"
 def my_experiment():
     print("Hello world")

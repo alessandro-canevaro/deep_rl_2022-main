@@ -30,7 +30,10 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
 
         self._last_batch_size = None
         self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs) #48, 48 #Tue set a breakpoint here 3x3x4
-        self.Logit = torch.nn.Linear(3*3*3+3*3, self.action_space.n)
+        self.Logit = torch.nn.Linear(3*3*3+3*3, 16)
+        self.Logit2 = torch.nn.Linear(16, self.action_space.n)
+
+        self.relu = torch.nn.ReLU()
 
         self.softmax = torch.nn.Softmax(dim=1)
 
@@ -68,6 +71,8 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
             selected_obs_val[b, :, :, :] = padded_obs_val[b, i-1:i+2, j-1:j+2, :]
 
         logit = self.Logit(selected_obs_val.reshape((B, 3*3*4)))
+        logit = self.relu(logit)
+        logit = self.Logit2(logit)
 
         Values = Values.reshape((B, 4*4))
         pos = (pos[:, 0] * pos[:, 1]).reshape((B, 1))

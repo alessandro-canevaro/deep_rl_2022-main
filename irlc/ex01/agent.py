@@ -197,7 +197,7 @@ def train(env, agent=None, experiment_name=None, num_episodes=1, verbose=True,
             trajectory = Trajectory(time=[], state=[], action=[], reward=[], env_info=[])
 
             for _ in itertools.count():
-                sleep(0.5) #for visualization
+                sleep(0.1) #for visualization
                 a = agent.pi(s,time) if temporal_policy else agent.pi(s)
                 sp, r, done, metadata = env.step(a)
 
