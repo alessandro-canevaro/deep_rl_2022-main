@@ -28,16 +28,17 @@ class MyAgent(Agent):
     def pi(self, s, k=None):
         #print("state in agent", s)
         #Wreturn self.env.action_space.sample()
-        a = self.trainer.compute_action(s)
+        a = self.trainer.compute_single_action(s)
         #print("ACTION", a)
         return a
     
-    def train(self, s, a, r, sp, done=False):
-        pass
-        #print(f"TRAIN s, a, r, sp, done, {s, a, r, sp, done}")
 
 vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
+
+checkpoint_dir = "./saved_models/500_VPN_empty_random_working/checkpoint_000500"#"./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
+TRAIN_ENV = "MazeDeterministic_empty4-train-v0"
+TEST_ENV = "MazeDeterministic_empty4-test-v0"
 
 
 def my_experiment():
@@ -54,13 +55,12 @@ def my_experiment():
     # config.model['fcnet_hiddens'] = [24, 24]
     #env = gym.make("MazeDeterministic_empty4-v0")
 
-    trainer = config.build(env="MazeDeterministic_empty4-train-v0")
+    trainer = config.build(env=TRAIN_ENV)
 
 
-    checkpoint_dir = "./saved_models/500_VPN_empty_random_working/checkpoint_000500"#"./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
     trainer.restore(checkpoint_dir)
 
-    env = gym.make("MazeDeterministic_empty4-test-v0")
+    env = gym.make(TEST_ENV)
     env = VideoMonitor(env)
     #added sleep in agent.py line 199
     #removed render_as_text in maze_environment.py line 101, 176
