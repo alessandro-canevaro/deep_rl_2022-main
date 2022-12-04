@@ -17,8 +17,7 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 
-#from my_vpn import VPNNetwork
-from my_vpn_v2 import VPNNetwork
+from my_vpn import VPNNetwork
 
 class MyAgent(Agent):
     def __init__(self, env, trainer):
