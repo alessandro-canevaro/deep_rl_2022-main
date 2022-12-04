@@ -2,17 +2,19 @@ import sys, os
 sys.path.append(os.path.normpath( os.path.dirname(__file__) +"/../" ))
 import gym
 from mazeenv.maze_environment import MazeEnvironment
+from raya3c.experiments_config import config
+
 gym.envs.register(
      id="MazeDeterministic_empty4-train-v0",
      entry_point='mazeenv.maze_environment:MazeEnvironment',
      max_episode_steps=200,
-     kwargs=dict(size=4, blockpct=0, render_mode='native'),
+     kwargs=dict(size=config["maze_size"], blockpct=config["wall_prob"], render_mode='native'),
 )
 gym.envs.register(
      id="MazeDeterministic_empty4-test-v0",
      entry_point='mazeenv.maze_environment:MazeEnvironment',
      max_episode_steps=200,
-     kwargs=dict(size=4, blockpct=0, render_mode='human'),
+     kwargs=dict(size=config["maze_size"], blockpct=config["wall_prob"], render_mode='human'),
 )
 from ray.tune.registry import register_env
 

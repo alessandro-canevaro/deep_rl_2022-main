@@ -104,6 +104,7 @@ def train(env, agent=None, experiment_name=None, num_episodes=1, verbose=True,
           resume_stats=None, # Resume stat collection from last save.
           log_interval=1, # Only log every log_interval steps. Reduces size of log files.
           delete_old_experiments=False, # Remove the old experiments folder. Useful while debugging a model (or to conserve disk space)
+          sleep_time=0,
           ):
     """
     Implement the main training loop, see \nref{c1s44}.
@@ -197,7 +198,7 @@ def train(env, agent=None, experiment_name=None, num_episodes=1, verbose=True,
             trajectory = Trajectory(time=[], state=[], action=[], reward=[], env_info=[])
 
             for _ in itertools.count():
-                sleep(0.1) #for visualization
+                sleep(sleep_time) #for visualization
                 a = agent.pi(s,time) if temporal_policy else agent.pi(s)
                 sp, r, done, metadata = env.step(a)
 
