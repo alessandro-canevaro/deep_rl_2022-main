@@ -22,7 +22,7 @@ import torch
 
 from my_vpn import VPNNetwork
 from datetime import datetime
-
+from tqdm import tqdm
 from functools import partial
 
 from raya3c.experiments_config import config as my_cfg
@@ -51,13 +51,13 @@ def my_experiment():
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
 
     print("training started")
-    for t in range(my_cfg["epochs"]):
-        result = trainer.train()
-        #print("RESULT", result)
-        rewards = result["hist_stats"]["episode_reward"]
-        print(
-            f"training epoch: {t}, rewards: {len(rewards)}, max: {max(rewards)}, avg: {result['episode_reward_mean']}"
-        )
+    with tqdm(total=my_cfg["epochs"], desc="Epochs", bar_format="{desc}{percentage:3.0f}%|{bar:10}{r_bar}") as bar:
+        for t in range(my_cfg["epochs"]):
+            result = trainer.train()
+            #print("RESULT", result)
+            rewards = result["hist_stats"]["episode_reward"]
+            #print(f"training epoch: {t}, rewards: {len(rewards)}, max: {max(rewards)}, avg: {result['episode_reward_mean']}")
+            bar.update()
 
     checkpoint_dir = trainer.save(f"./saved_models/"+my_cfg["run_name"])
     print(f"Saved model in {checkpoint_dir}")
