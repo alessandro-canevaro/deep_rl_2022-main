@@ -19,12 +19,14 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 from raya3c.experiments_config import config as my_cfg
-
+from collections import defaultdict
 from my_vpn import VPNNetwork
 
 
 class MyAgent(Agent):
     def __init__(self, env, trainer):
+        self.v = defaultdict(lambda: 0)
+        self.k = 0
         super().__init__(env)
         self.trainer = trainer
 
@@ -34,6 +36,22 @@ class MyAgent(Agent):
         a = self.trainer.compute_single_action(s)
         # print("ACTION", a)
         return a
+    
+    def plotvalues(self):
+        policy = self.trainer.get_policy()
+        agent_val = policy.model.value_function()
+        values, a_i, a_j = policy.model.get_my_values()
+        assert torch.allclose(agent_val, values[0, a_i, a_j]), f"agent val {agent_val}, agent pos ({a_i}, {a_j}), values {values}"
+
+        vv = values[0, :, :].detach().numpy()
+        for i,j in self.v:
+            self.v[i,j] = vv[i, j]
+
+    def train(self, s, a, r, sp, done=False):
+        # do training stuff here (save to buffer, call torch, whatever)
+        self.k += 1
+        if done:
+            self.k = 0
 
 
 vin_label = "vin_network_model"
@@ -65,10 +83,14 @@ def my_experiment():
     trainer.restore(checkpoint_dir)
 
     env = gym.make(TEST_ENV)
-    env = VideoMonitor(env)
+
+    agent = MyAgent(env, trainer)
+    #env = VideoMonitor(env)
+    env = VideoMonitor(env, agent=agent, agent_monitor_keys=('v', ), render_kwargs={'method_label': 'VI-K'})
+
     # added sleep in agent.py line 199
     # removed render_as_text in maze_environment.py line 101, 176
-    train(env, MyAgent(env, trainer), num_episodes=5, sleep_time=0)
+    train(env, agent, num_episodes=5, sleep_time=5)
 
     env.close()
 

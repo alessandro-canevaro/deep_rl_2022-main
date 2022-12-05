@@ -51,13 +51,18 @@ def my_experiment():
     trainer = config.build(env="MazeDeterministic_empty4-train-v0")
 
     print("training started")
+    timesteps = 0
     with tqdm(total=my_cfg["epochs"], desc="Epochs", bar_format="{desc}{percentage:3.0f}%|{bar:10}{r_bar}") as bar:
         for t in range(my_cfg["epochs"]):
             result = trainer.train()
+            timesteps += sum(result["hist_stats"]["episode_lengths"])
+            #print(f'episode lenght {result["hist_stats"]["episode_lengths"]}, timesteps: {timesteps}')
             #print("RESULT", result)
             rewards = result["hist_stats"]["episode_reward"]
             #print(f"training epoch: {t}, rewards: {len(rewards)}, max: {max(rewards)}, avg: {result['episode_reward_mean']}")
             bar.update()
+
+    print(f"Timesteps: {timesteps}")
 
     checkpoint_dir = trainer.save(f"./saved_models/"+my_cfg["run_name"])
     print(f"Saved model in {checkpoint_dir}")

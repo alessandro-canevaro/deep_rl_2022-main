@@ -72,12 +72,14 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         logit = self.relu(logit)
         logit = self.Logit2(logit)
 
-        if not self.is_train:
-            self.plotValues(Values, pos, goal_pos, p)
+        #if not self.is_train:
+        #    self.plotValues(Values, pos, goal_pos, p)
+
+        self.my_stats = (Values.reshape((B, self.maze_h, self.maze_w))[:, :, :], pos[0, 0], pos[0, 1])
 
         # Value at the agent position
         Values = Values.reshape((B, self.maze_h * self.maze_w))
-        pos = (pos[:, 0] * pos[:, 1]).reshape((B, 1))
+        pos = (self.maze_h *pos[:, 0] + pos[:, 1]).reshape((B, 1))
         self.V_ = torch.gather(Values, 1, pos).reshape((B))
 
         return logit, []
@@ -141,6 +143,9 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
                 Values = Values.maximum(nv)
 
         return Values
+
+    def get_my_values(self):
+        return self.my_stats
 
     def value_function(self):
         return self.V_

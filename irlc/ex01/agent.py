@@ -198,7 +198,11 @@ def train(env, agent=None, experiment_name=None, num_episodes=1, verbose=True,
             trajectory = Trajectory(time=[], state=[], action=[], reward=[], env_info=[])
 
             for _ in itertools.count():
-                sleep(sleep_time) #for visualization
+                try:
+                    agent.plotvalues()
+                    sleep(sleep_time) #for visualization
+                except AttributeError: #the agent doesnt have the plotvalue attribute
+                    pass
                 a = agent.pi(s,time) if temporal_policy else agent.pi(s)
                 sp, r, done, metadata = env.step(a)
 
