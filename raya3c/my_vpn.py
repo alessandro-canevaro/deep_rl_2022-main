@@ -26,12 +26,13 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
 
         self._last_batch_size = None
         self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs)  # 48, 48 #Tue set a breakpoint here 3x3x4
+        
         self.Logit = torch.nn.Linear(3 * 3 * 3 + 3 * 3, 16)
         self.Logit2 = torch.nn.Linear(16, self.action_space.n)
 
         self.relu = torch.nn.ReLU()
-
         self.softmax = torch.nn.Softmax(dim=1)
+        self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, input_dict, state, seq_lens):
         obs_flat = input_dict["obs"]
@@ -41,16 +42,17 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         obs_flat = obs_flat.reshape((B, self.maze_h * self.maze_w * 3))
 
         # VIN
-        phi_out = self.Phi(obs_flat).reshape((B, self.maze_h, self.maze_w, 3))
+        phi_out = self.sigmoid(self.Phi(obs_flat)).reshape((B, self.maze_h, self.maze_w, 3))
         rin = phi_out[:, :, :, 0]
         rout = phi_out[:, :, :, 1]
-        p = self.softmax(phi_out[:, :, :, 2].reshape((B, self.maze_h * self.maze_w))).reshape(
-            (B, self.maze_h, self.maze_w)
-        )
+        p = phi_out[:, :, :, 2]#self.softmax(phi_out[:, :, :, 2].reshape((B, self.maze_h * self.maze_w))).reshape(
+            #(B, self.maze_h, self.maze_w)
+        #)
         # assert abs(p.sum()/B - 1.0) < 0.01 , f"sum = {p.sum()/B}"
-
-        Values = self.VIN(rin, rout, p, K=self.vin_k)
         
+        Values = self.VIN(rin, rout, p, K=self.vin_k)
+        #print(f"WALLS {obs[0, :, :, 0]}, AGENT {obs[0, :, :, 1]} GOAL {obs[0, :, :, 2]} Values {Values}")
+        #print(f"RIN {rin}, ROUT {rout} P {p} ")#Values {Values}")
         # Policy net
         obs_val = torch.cat((obs, Values.unsqueeze(dim=-1)), dim=3)
         padded_obs_val = torch.nn.functional.pad(obs_val, (0, 0, 1, 1, 1, 1, 0, 0), "constant", 0)
@@ -75,7 +77,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         #if not self.is_train:
         #    self.plotValues(Values, pos, goal_pos, p)
 
-        self.my_stats = (Values.reshape((B, self.maze_h, self.maze_w))[:, :, :], pos[0, 0], pos[0, 1])
+        self.my_stats = (Values.reshape((B, self.maze_h, self.maze_w))[:, :, :], pos[0, 0], pos[0, 1], p)
 
         # Value at the agent position
         Values = Values.reshape((B, self.maze_h * self.maze_w))

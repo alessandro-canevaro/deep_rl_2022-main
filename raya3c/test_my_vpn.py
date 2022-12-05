@@ -40,15 +40,24 @@ class MyAgent(Agent):
     def plotvalues(self):
         policy = self.trainer.get_policy()
         agent_val = policy.model.value_function()
-        values, a_i, a_j = policy.model.get_my_values()
+        values, a_i, a_j, p = policy.model.get_my_values()
         assert torch.allclose(agent_val, values[0, a_i, a_j]), f"agent val {agent_val}, agent pos ({a_i}, {a_j}), values {values}"
 
+        print(f"agent position: i={a_i} j={a_j}")
+        #X_i, X_j = 2, 4
+        #vv = np.zeros_like(values[0, :, :].detach().numpy())
+        #vv[2, 4] = 0.934
+
+        p = p[0, :, :].detach().numpy()
+
         vv = values[0, :, :].detach().numpy()
+        print(vv)
         for i,j in self.v:
-            self.v[i,j] = vv[i, j]
+            self.v[i,j] = vv[my_cfg["maze_size"] -1 - j, i]
 
     def train(self, s, a, r, sp, done=False):
         # do training stuff here (save to buffer, call torch, whatever)
+        self.plotvalues()
         self.k += 1
         if done:
             self.k = 0

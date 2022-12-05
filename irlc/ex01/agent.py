@@ -199,7 +199,7 @@ def train(env, agent=None, experiment_name=None, num_episodes=1, verbose=True,
 
             for _ in itertools.count():
                 try:
-                    agent.plotvalues()
+                    #agent.plotvalues()
                     sleep(sleep_time) #for visualization
                 except AttributeError: #the agent doesnt have the plotvalue attribute
                     pass
