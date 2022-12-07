@@ -25,8 +25,8 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         torch.nn.Module.__init__(self)
         self.num_outputs = int(np.product(self.obs_space.shape))
-        self.maze_w = 4
-        self.maze_h = 4
+        self.maze_w = 5
+        self.maze_h = 5
 
         self.is_train = model_config["custom_model_config"]["is_train"]
 

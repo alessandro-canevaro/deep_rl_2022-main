@@ -56,15 +56,15 @@ vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
 EPOCHS = 500
-RUN_NAME = "2_logit_layers_no_walls"
+RUN_NAME = "MARIALENA_04_2L_WP0.2_LR0.01_5x5_E500"
 ENV_NAME = "MazeDeterministic_empty4-train-v0"
 def my_experiment():
     print("Hello world")
     #ray.init(num_cpus=4, num_gpus=0)
 
     # see https://docs.ray.io/en/latest/rllib/rllib-training.html
-    mconf = dict(custom_model=vin_label, use_lstm=False)
-    config = A3CConfig().training(lr=0.01/10, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
+    mconf = dict(custom_model=vin_label, use_lstm=False, custom_model_config = {"is_train": True})
+    config = A3CConfig().training(lr=0.01, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
     config = config.framework('torch')
     # config.
     config = config.callbacks(partial(MyCallbacks, RUN_NAME))

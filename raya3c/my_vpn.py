@@ -18,8 +18,8 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         torch.nn.Module.__init__(self)
         self.num_outputs = int(np.product(self.obs_space.shape))
-        self.maze_w = 4
-        self.maze_h = 4
+        self.maze_w = 5
+        self.maze_h = 5
 
         self._last_batch_size = None
         self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs) #48, 48 #Tue set a breakpoint here 3x3x4
@@ -32,7 +32,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
     def forward(self, input_dict, state, seq_lens):
         #print(input_dict)
         obs = input_dict["obs"] #obs.shape = (B, 48)
-        obs = obs.reshape(obs.shape[0], 4*4*3)
+        obs = obs.reshape(obs.shape[0], 5*5*3)
         assert len(obs.shape) == 2, "dimensions are not 2, {}".format(obs.shape)
         B = obs.shape[0] #batch size
         V_ = torch.zeros((B, ))
