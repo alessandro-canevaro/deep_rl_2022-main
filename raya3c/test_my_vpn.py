@@ -87,11 +87,8 @@ def my_experiment():
     env = gym.make(TEST_ENV)
 
     agent = MyAgent(env, trainer)
-    #env = VideoMonitor(env)
     env = VideoMonitor(env, agent=agent, agent_monitor_keys=('v', ), render_kwargs={'method_label': 'VI-K'})
 
-    # added sleep in agent.py line 199
-    # removed render_as_text in maze_environment.py line 101, 176
     train(env, agent, num_episodes=5, sleep_time=5)
 
     env.close()
