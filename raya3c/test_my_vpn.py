@@ -25,7 +25,7 @@ from my_vpn import VPNNetwork
 
 class MyAgent(Agent):
     def __init__(self, env, trainer):
-        self.v = defaultdict(lambda: 0)
+        #self.v = defaultdict(lambda: 0)
         self.k = 0
         super().__init__(env)
         self.trainer = trainer
@@ -87,9 +87,9 @@ def my_experiment():
     env = gym.make(TEST_ENV)
 
     agent = MyAgent(env, trainer)
-    env = VideoMonitor(env, agent=agent, agent_monitor_keys=('v', ), render_kwargs={'method_label': 'VI-K'})
+    env = VideoMonitor(env, agent=agent)#, agent_monitor_keys=('v', ), render_kwargs={'method_label': 'VI-K'})
 
-    train(env, agent, num_episodes=5, sleep_time=5)
+    train(env, agent, num_episodes=10, sleep_time=0.1)
 
     env.close()
 

@@ -32,3 +32,6 @@ https://arxiv.org/abs/1602.02867
  - for training, set up the paramenters in the experiments_config.py file, then run the train_my_vpn.py
  - for testing, adapt the paramenters in the experiments_config.py to match the saved checkpoint, then run test_my_vpn.py
  - if you want to create a new environment modify the maze_register.py file
+
+# P.S.:
+ - Currently the experiments_config.py is set up to run the model with the TESTDEMO checkpoint (trained on a 5x5 maze with walls)
