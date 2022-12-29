@@ -25,7 +25,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         self.vin_k = model_config["custom_model_config"]["vin_k"]
 
         self._last_batch_size = None
-        self.Phi = torch.nn.Linear(self.num_outputs, self.num_outputs)  # 48, 48 #Tue set a breakpoint here 3x3x4
+        self.Phi = torch.nn.Linear(self.num_outputs, 2*(self.maze_w*self.maze_h))  # 48, 48 #Tue set a breakpoint here 3x3x4
         
         self.Logit = torch.nn.Linear(3 * 3 * 3 + 3 * 3, 16)
         self.Logit2 = torch.nn.Linear(16, self.action_space.n)
@@ -42,15 +42,14 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         obs_flat = obs_flat.reshape((B, self.maze_h * self.maze_w * 3))
 
         # VIN
-        phi_out = self.sigmoid(self.Phi(obs_flat)).reshape((B, self.maze_h, self.maze_w, 3))
-        rin = phi_out[:, :, :, 0]
-        rout = phi_out[:, :, :, 1]
-        p = phi_out[:, :, :, 2]#self.softmax(phi_out[:, :, :, 2].reshape((B, self.maze_h * self.maze_w))).reshape(
+        phi_out = self.sigmoid(self.Phi(obs_flat)).reshape((B, self.maze_h, self.maze_w, 2))
+        r = phi_out[:, :, :, 0]
+        p = phi_out[:, :, :, 1]#self.softmax(phi_out[:, :, :, 2].reshape((B, self.maze_h * self.maze_w))).reshape(
             #(B, self.maze_h, self.maze_w)
         #)
         # assert abs(p.sum()/B - 1.0) < 0.01 , f"sum = {p.sum()/B}"
         
-        Values = self.VIN(rin, rout, p, K=self.vin_k)
+        Values = self.MVProp(r, p, K=self.vin_k)
         #print(f"WALLS {obs[0, :, :, 0]}, AGENT {obs[0, :, :, 1]} GOAL {obs[0, :, :, 2]} Values {Values}")
         #print(f"RIN {rin}, ROUT {rout} P {p} ")#Values {Values}")
         # Policy net
@@ -125,23 +124,16 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
             #plt.show()
             
 
-    def VIN(self, rin, rout, p, K=20):
-        B = rin.shape[0]
-        Values = torch.zeros((B, self.maze_h, self.maze_w))
-
-        padded_rin = torch.nn.functional.pad(rin, (1, 1, 1, 1, 0, 0), "constant", 0)
+    def MVProp(self, r, p, K=20):
+        B = r.shape[0]
+        Values = r
 
         for __ in range(K):
             padded_v = torch.nn.functional.pad(Values, (1, 1, 1, 1, 0, 0), "constant", 0)
 
             for h_offset, w_offset in [(0, 1), (2, 1), (1, 0), (1, 2)]:
                 shifted_v = padded_v[:, h_offset : h_offset + self.maze_h, w_offset : w_offset + self.maze_w]
-                shifted_rin = padded_rin[:, h_offset : h_offset + self.maze_h, w_offset : w_offset + self.maze_w]
-
-                mask = torch.eq(shifted_rin, torch.zeros((B, self.maze_h, self.maze_w)))
-                masked_rout = rout * (1 - mask.int().float())
-
-                nv = p * shifted_v + shifted_rin - masked_rout
+                nv = r + p * (shifted_v - r)
                 Values = Values.maximum(nv)
 
         return Values

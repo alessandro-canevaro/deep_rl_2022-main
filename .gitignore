@@ -3,6 +3,7 @@ Lib/
 dl_venv/
 wandb/
 experiments/
+deep_rl_2022_main.egg-info/
 pyenv.cfg
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,10 +1,12 @@
 import sys, os
-sys.path.append(os.path.normpath( os.path.dirname(__file__) +"/../" ))
+
+sys.path.append(os.path.normpath(os.path.dirname(__file__) + "/../"))
 import gym
 from mazeenv import maze_register
 from a3c import A3CConfig
+
 # import farmer
-#from dtufarm import DTUCluster
+# from dtufarm import DTUCluster
 from irlc import Agent, train, VideoMonitor
 
 import numpy as np
@@ -16,61 +18,93 @@ from raya3c.my_callback import MyCallbacks
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
-
+from raya3c.experiments_config import config as my_cfg
+from collections import defaultdict
 from my_vpn import VPNNetwork
+
 
 class MyAgent(Agent):
     def __init__(self, env, trainer):
+        self.v = defaultdict(lambda: 0)
+        self.k = 0
         super().__init__(env)
         self.trainer = trainer
 
     def pi(self, s, k=None):
-        #print("state in agent", s)
-        #Wreturn self.env.action_space.sample()
-        a = self.trainer.compute_action(s)
-        #print("ACTION", a)
+        # print("state in agent", s)
+        # Wreturn self.env.action_space.sample()
+        a = self.trainer.compute_single_action(s)
+        # print("ACTION", a)
         return a
     
+    def plotvalues(self):
+        policy = self.trainer.get_policy()
+        agent_val = policy.model.value_function()
+        values, a_i, a_j, p = policy.model.get_my_values()
+        assert torch.allclose(agent_val, values[0, a_i, a_j]), f"agent val {agent_val}, agent pos ({a_i}, {a_j}), values {values}"
+
+        print(f"agent position: i={a_i} j={a_j}")
+        #X_i, X_j = 2, 4
+        #vv = np.zeros_like(values[0, :, :].detach().numpy())
+        #vv[2, 4] = 0.934
+
+        p = p[0, :, :].detach().numpy()
+
+        vv = values[0, :, :].detach().numpy()
+        print(vv)
+        for i,j in self.v:
+            self.v[i,j] = vv[my_cfg["maze_size"] -1 - j, i]
+
     def train(self, s, a, r, sp, done=False):
-        pass
-        #print(f"TRAIN s, a, r, sp, done, {s, a, r, sp, done}")
+        # do training stuff here (save to buffer, call torch, whatever)
+        self.plotvalues()
+        self.k += 1
+        if done:
+            self.k = 0
+
 
 vin_label = "vin_network_model"
 ModelCatalog.register_custom_model(vin_label, VPNNetwork)
 
+checkpoint_dir = my_cfg["models_dir"]+my_cfg["run_name"]+my_cfg["chk_point"] 
+TRAIN_ENV = "MazeDeterministic_empty4-train-v0"
+TEST_ENV = "MazeDeterministic_empty4-test-v0"
+
 
 def my_experiment():
-    print("Hello world testing")
-    # see https://docs.ray.io/en/latest/rllib/rllib-training.html
-    mconf = dict(custom_model=vin_label, use_lstm=False)
-    config = A3CConfig().training(lr=0.01/10, grad_clip=30.0, model=mconf).resources(num_gpus=0).rollouts(num_rollout_workers=1)
-    config = config.framework('torch')
-    # config.
-    #config = config.callbacks(MyCallbacks)
-    # Set up alternative model (gridworld).
-    # config = config.model(custom_model="my_torch_model", use_lstm=False)
+    print("Setting up testing")
 
-    # config.model['fcnet_hiddens'] = [24, 24]
-    #env = gym.make("MazeDeterministic_empty4-v0")
+    net_config={"is_train": False,
+                "maze_w": my_cfg["maze_size"],
+                "maze_h": my_cfg["maze_size"],
+                "vin_k": my_cfg["vin_k"]}
+    mconf = dict(custom_model=vin_label, use_lstm=False, custom_model_config=net_config)
+    config = (
+        A3CConfig()
+        .training(lr=my_cfg["lr"], train_batch_size=my_cfg["batch_size"], grad_clip=30.0, model=mconf)
+        .resources(num_gpus=0)
+        .rollouts(num_rollout_workers=1)
+    )
+    config = config.framework("torch")
 
-    trainer = config.build(env="MazeDeterministic_empty4-train-v0")
+    trainer = config.build(env=TRAIN_ENV)
 
-
-    checkpoint_dir = "./saved_models/100epochs_working"#"./saved_models/checkpoint_000001"
     trainer.restore(checkpoint_dir)
 
-    env = gym.make("MazeDeterministic_empty4-test-v0")
-    env = VideoMonitor(env)
-    #added sleep in agent.py line 199
-    #removed render_as_text in maze_environment.py line 101, 176
-    train(env, MyAgent(env, trainer), num_episodes=5)
-    
+    env = gym.make(TEST_ENV)
+
+    agent = MyAgent(env, trainer)
+    #env = VideoMonitor(env)
+    env = VideoMonitor(env, agent=agent, agent_monitor_keys=('v', ), render_kwargs={'method_label': 'VI-K'})
+
+    # added sleep in agent.py line 199
+    # removed render_as_text in maze_environment.py line 101, 176
+    train(env, agent, num_episodes=5, sleep_time=5)
+
     env.close()
-        
+
 
 if __name__ == "__main__":
     my_experiment()
     print("Job done")
     sys.exit()
-    
-

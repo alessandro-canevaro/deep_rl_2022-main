@@ -30,11 +30,15 @@ parser.add_argument("--stop-iters", type=int, default=2000)
 
 class MyCallbacks(DefaultCallbacks):
     wandb = None
+    def __init__(self, run_name):
+        super().__init__()
+        self.run_name = run_name
+
     def on_algorithm_init(self, *args, **kwargs):
         print("Initializing the callback logger..")
         if self.wandb is None:
             import wandb
-            wandb.init(project="dtu-rl", entity="alessandro26", name="run1")
+            wandb.init(project="VPN", entity="deep-rl", name=self.run_name)
             wandb.config = {
                 "learning_rate": 0.001,
                 "epochs": 100,

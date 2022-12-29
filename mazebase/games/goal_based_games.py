@@ -60,7 +60,8 @@ class SingleGoal(GoalType):
         visited, _ = creationutils.dijkstra(self, loc,
                                             creationutils.agent_movefunc)
         if self.goal.location not in visited:
-            raise MazeException("No path to goal")
+            pass
+            #raise MazeException("No path to goal")
 
     def _side_information(self):
         return super(SingleGoal, self)._side_information() + \

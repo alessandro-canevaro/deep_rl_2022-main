@@ -161,6 +161,7 @@ class ShittyVIAgent(Agent):
     def train(self, s, a, r, sp, done=False):
         # do training stuff here (save to buffer, call torch, whatever)
         w = VIP(s, self.Phi(s))
+        print(f"k {self.k}, w {w.shape[2]-1}")
         vv = w[:,:,min(self.k, w.shape[2]-1)]
         for i,j in self.v:
             self.v[i,j] = vv[j, i] # annoying transpose
