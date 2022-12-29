@@ -41,7 +41,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         obs = obs_flat.reshape(B, self.maze_h, self.maze_w, 3)
         obs_flat = obs_flat.reshape((B, self.maze_h * self.maze_w * 3))
 
-        # VIN
+        # VProp
         phi_out = self.sigmoid(self.Phi(obs_flat)).reshape((B, self.maze_h, self.maze_w, 3))
         rin = phi_out[:, :, :, 0]
         rout = phi_out[:, :, :, 1]
@@ -50,7 +50,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
         #)
         # assert abs(p.sum()/B - 1.0) < 0.01 , f"sum = {p.sum()/B}"
         
-        Values = self.VIN(rin, rout, p, K=self.vin_k)
+        Values = self.VProp(rin, rout, p, K=self.vin_k)
         #print(f"WALLS {obs[0, :, :, 0]}, AGENT {obs[0, :, :, 1]} GOAL {obs[0, :, :, 2]} Values {Values}")
         #print(f"RIN {rin}, ROUT {rout} P {p} ")#Values {Values}")
         # Policy net
@@ -125,7 +125,7 @@ class VPNNetwork(TorchModelV2, torch.nn.Module):
             #plt.show()
             
 
-    def VIN(self, rin, rout, p, K=20):
+    def VProp(self, rin, rout, p, K=20):
         B = rin.shape[0]
         Values = torch.zeros((B, self.maze_h, self.maze_w))
 

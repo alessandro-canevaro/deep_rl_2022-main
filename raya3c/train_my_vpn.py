@@ -5,8 +5,6 @@ import gym
 from mazeenv import maze_register
 from a3c import A3CConfig
 
-# import farmer
-# from dtufarm import DTUCluster
 from irlc import Agent, train, VideoMonitor
 
 import numpy as np
@@ -15,7 +13,6 @@ from ray import tune
 from ray.tune.logger import pretty_print
 from raya3c.my_callback import MyCallbacks
 
-# The custom model that will be wrapped by an LSTM.
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
@@ -56,10 +53,7 @@ def my_experiment():
         for t in range(my_cfg["epochs"]):
             result = trainer.train()
             timesteps += sum(result["hist_stats"]["episode_lengths"])
-            #print(f'episode lenght {result["hist_stats"]["episode_lengths"]}, timesteps: {timesteps}')
-            #print("RESULT", result)
             rewards = result["hist_stats"]["episode_reward"]
-            #print(f"training epoch: {t}, rewards: {len(rewards)}, max: {max(rewards)}, avg: {result['episode_reward_mean']}")
             bar.update()
 
     print(f"Timesteps: {timesteps}")
