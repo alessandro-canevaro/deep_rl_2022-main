@@ -19,4 +19,16 @@ https://arxiv.org/abs/1602.02867
  - .\\[your env name]\Scripts\activate
  - python -m pip install -r requirements.txt
  - pip install -e .
- - deactivate
+ 
+# Important files
+ - the entry points of the project are located in the raya3c folder
+ - my_vpn.py contains the VPNNetwork custom model with the value propagation implementation
+ - my_vpn_mvprop.py contains the VPNNetwork custom model with the maximum value propagation implementation
+ - train_my_vpn.py is used to train the network
+ - test_my_vpn.py is used to test the network
+ - maze_register.py is used for creating custom environments
+
+# How to run:
+ - for training, set up the paramenters in the experiments_config.py file, then run the train_my_vpn.py
+ - for testing, adapt the paramenters in the experiments_config.py to match the saved checkpoint, then run test_my_vpn.py
+ - if you want to create a new environment modify the maze_register.py file
