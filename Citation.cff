@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Alessandro Canevaro"
+- family-names: "Pietro Moretto"
+- family-names: "Xinyi Liu"
+- family-names: "Maria Eleni Kostopoulou"
+- family-names: "Mauricio Souza de Alencar"
+title: "REINFORCEMENT LEARNING: VALUE-PROPAGATION NETWORKS"
+version: 1.0.0
+doi: 10.5281/zenodo.1234
+date-released: 2023-01-01
+url: "https://github.com/alessandro-canevaro/deep_rl_2022-main"
